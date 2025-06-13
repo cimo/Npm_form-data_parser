@@ -1,12 +1,12 @@
 {
     "name": "@cimo/form-data_parser",
-    "version": "1.1.23",
+    "version": "1.1.24",
     "description": "Parser for the form-data request. Light, fast and secure.",
     "author": "cimo",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/cimo/Form-data_parser.git"
+        "url": "https://github.com/cimo/Npm_form-data_parser.git"
     },
     "scripts": {
         "remove_dist": "node -e \"const fs = require('fs'); try{ fs.rmdirSync('./dist/', { recursive: true }) } catch{}; process.exit(0);\"",
