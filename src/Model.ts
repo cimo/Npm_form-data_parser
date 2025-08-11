@@ -1,8 +1,9 @@
-export enum EreadState {
-    INIT,
-    HEADER,
-    DATA,
-    SEPARATOR
+export interface Iinput {
+    name: string;
+    buffer: Buffer;
+    filename: string;
+    mimeType: string;
+    size: string;
 }
 
 export interface Iheader {
@@ -11,10 +12,9 @@ export interface Iheader {
     byteList: number[];
 }
 
-export interface Iinput {
-    name: string;
-    buffer: Buffer;
-    filename: string;
-    mimeType: string;
-    size: string;
+export enum EreadState {
+    INIT,
+    HEADER,
+    DATA,
+    SEPARATOR
 }

@@ -1,6 +1,44 @@
 // Source
 import * as Model from "./Model";
 
+const createObject = (input: Model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
+    Object.defineProperty(input, label, {
+        value: value,
+        writable: true,
+        enumerable: true,
+        configurable: true
+    });
+};
+
+const processData = (header: Model.Iheader): Model.Iinput => {
+    const resultObject = {} as Model.Iinput;
+
+    const contentDispositionSplit = header.contentDisposition.split(";");
+
+    if (contentDispositionSplit) {
+        const name = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1].replace(/"/g, "").trim() : "";
+        const buffer = Buffer.from(header.byteList);
+        const filename = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1].trim() : "";
+
+        createObject(resultObject, "name", name);
+
+        createObject(resultObject, "buffer", buffer);
+
+        if (filename) {
+            const byteObject: Record<string, number> = JSON.parse(filename);
+            createObject(resultObject, "filename", byteObject);
+
+            const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
+            createObject(resultObject, "mimeType", mimeType);
+
+            const size = Buffer.byteLength(buffer);
+            createObject(resultObject, "size", size);
+        }
+    }
+
+    return resultObject;
+};
+
 export const readInput = (buffer: Buffer, contentType: string | undefined): Model.Iinput[] => {
     const resultList: Model.Iinput[] = [];
 
@@ -86,42 +124,4 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): Mode
     }
 
     return resultList;
-};
-
-const createObject = (input: Model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
-    Object.defineProperty(input, label, {
-        value: value,
-        writable: true,
-        enumerable: true,
-        configurable: true
-    });
-};
-
-const processData = (header: Model.Iheader): Model.Iinput => {
-    const result = {} as Model.Iinput;
-
-    const contentDispositionSplit = header.contentDisposition.split(";");
-
-    if (contentDispositionSplit) {
-        const name = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1].replace(/"/g, "").trim() : "";
-        const buffer = Buffer.from(header.byteList);
-        const filename = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1].trim() : "";
-
-        createObject(result, "name", name);
-
-        createObject(result, "buffer", buffer);
-
-        if (filename) {
-            const byteList = JSON.parse(filename) as Record<string, number>;
-            createObject(result, "filename", byteList);
-
-            const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
-            createObject(result, "mimeType", mimeType);
-
-            const size = Buffer.byteLength(buffer);
-            createObject(result, "size", size);
-        }
-    }
-
-    return result;
 };

@@ -79,7 +79,7 @@ export const api = (app: Express.Express): void => {
 ```
 ...
 
-import { Cfdp, CfdpModel } from "@cimo/form-data_parser";
+import { Cfdp, CfdpModel } from "@cimo/form-data_parser/dist/src/Main";
 
 export const execute = (request: Express.Request, isFileExists: boolean): Promise<CfdpModel.Iinput[]> => {
     return new Promise((resolve, reject) => {
@@ -95,7 +95,7 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
 
             for (const formData of formDataList) {
                 if (formData.name === "file" && formData.filename && formData.buffer) {
-                    const input = `/home/root/file/input/${formData.filename}`;
+                    const input = `/home/app/file/input/${formData.filename}`;
 
                     if (isFileExists && Fs.existsSync(input)) {
                         reject("File exists.");
