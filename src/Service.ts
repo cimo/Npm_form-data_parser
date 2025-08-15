@@ -1,7 +1,7 @@
 // Source
-import * as Model from "./Model";
+import * as model from "./Model";
 
-const createObject = (input: Model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
+const createObject = (input: model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
     Object.defineProperty(input, label, {
         value: value,
         writable: true,
@@ -10,8 +10,8 @@ const createObject = (input: Model.Iinput, label: string, value: Buffer | Record
     });
 };
 
-const processData = (header: Model.Iheader): Model.Iinput => {
-    const resultObject = {} as Model.Iinput;
+const processData = (header: model.Iheader): model.Iinput => {
+    const resultObject = {} as model.Iinput;
 
     const contentDispositionSplit = header.contentDisposition.split(";");
 
@@ -39,14 +39,14 @@ const processData = (header: Model.Iheader): Model.Iinput => {
     return resultObject;
 };
 
-export const readInput = (buffer: Buffer, contentType: string | undefined): Model.Iinput[] => {
-    const resultList: Model.Iinput[] = [];
+export const readInput = (buffer: Buffer, contentType: string | undefined): model.Iinput[] => {
+    const resultList: model.Iinput[] = [];
 
     if (contentType) {
         const boundary = contentType.replace("multipart/form-data; boundary=", "");
 
         let line = "";
-        let readState = Model.EreadState.INIT;
+        let readState = model.EreadState.INIT;
         let headerInputList: string[] = [];
         let headerContentDisposition = "";
         let headerContentType = "";
@@ -62,17 +62,17 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): Mode
                 line += String.fromCharCode(byte);
             }
 
-            if (characterReturn && readState === Model.EreadState.INIT) {
+            if (characterReturn && readState === model.EreadState.INIT) {
                 if (line == "--" + boundary) {
-                    readState = Model.EreadState.HEADER;
+                    readState = model.EreadState.HEADER;
                 }
 
                 line = "";
-            } else if (characterReturn && readState === Model.EreadState.HEADER) {
+            } else if (characterReturn && readState === model.EreadState.HEADER) {
                 if (line.length) {
                     headerInputList.push(line);
                 } else {
-                    readState = Model.EreadState.DATA;
+                    readState = model.EreadState.DATA;
 
                     for (const b of headerInputList) {
                         if (b.toLowerCase().startsWith("content-disposition:")) {
@@ -86,13 +86,13 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): Mode
                 }
 
                 line = "";
-            } else if (readState === Model.EreadState.DATA) {
+            } else if (readState === model.EreadState.DATA) {
                 if (line.length > boundary.length + 4) {
                     line = "";
                 }
 
                 if (line === "--" + boundary) {
-                    readState = Model.EreadState.SEPARATOR;
+                    readState = model.EreadState.SEPARATOR;
 
                     const difference = byteList.length - line.length;
                     const byteListSlice = byteList.slice(0, difference - 1);
@@ -117,8 +117,8 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): Mode
                 if (characterReturn) {
                     line = "";
                 }
-            } else if (characterReturn && readState === Model.EreadState.SEPARATOR) {
-                readState = Model.EreadState.HEADER;
+            } else if (characterReturn && readState === model.EreadState.SEPARATOR) {
+                readState = model.EreadState.HEADER;
             }
         }
     }
