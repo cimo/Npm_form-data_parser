@@ -55,8 +55,8 @@ export const api = (app: Express.Express): void => {
                     let fileName = "";
 
                     for (const resultControllerUpload of resultControllerUploadList) {
-                        if (resultControllerUpload.name === "file" && resultControllerUpload.filename) {
-                            fileName = resultControllerUpload.filename;
+                        if (resultControllerUpload.name === "file" && resultControllerUpload.fileName) {
+                            fileName = resultControllerUpload.fileName;
 
                             break;
                         }
@@ -94,8 +94,8 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
             const formDataList = Cfdp.readInput(buffer, request.headers["content-type"]);
 
             for (const formData of formDataList) {
-                if (formData.name === "file" && formData.filename && formData.buffer) {
-                    const input = `/home/app/file/input/${formData.filename}`;
+                if (formData.name === "file" && formData.fileName && formData.buffer) {
+                    const input = `/home/app/file/input/${formData.fileName}`;
 
                     if (isFileExists && Fs.existsSync(input)) {
                         reject("File exists.");

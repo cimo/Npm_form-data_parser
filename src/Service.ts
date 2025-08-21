@@ -18,15 +18,15 @@ const processData = (header: model.Iheader): model.Iinput => {
     if (contentDispositionSplit) {
         const name = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1].replace(/"/g, "").trim() : "";
         const buffer = Buffer.from(header.byteList);
-        const filename = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1].trim() : "";
+        const fileName = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1].trim() : "";
 
         createObject(resultObject, "name", name);
 
         createObject(resultObject, "buffer", buffer);
 
-        if (filename) {
-            const byteObject: Record<string, number> = JSON.parse(filename);
-            createObject(resultObject, "filename", byteObject);
+        if (fileName) {
+            const byteObject: Record<string, number> = JSON.parse(fileName);
+            createObject(resultObject, "fileName", byteObject);
 
             const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
             createObject(resultObject, "mimeType", mimeType);

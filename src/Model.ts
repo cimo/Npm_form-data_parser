@@ -1,7 +1,7 @@
 export interface Iinput {
     name: string;
     buffer: Buffer;
-    filename: string;
+    fileName: string;
     mimeType: string;
     size: string;
 }
