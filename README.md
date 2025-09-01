@@ -49,25 +49,24 @@ import * as ControllerUpload from "../Controller/Upload";
 
 export const api = (app: Express.Express): void => {
     app.post("/upload", (request: Express.Request, response: Express.Response) => {
-        void (async () => {
-            await ControllerUpload.execute(request, false)
-                .then((resultControllerUploadList) => {
-                    let fileName = "";
+        ControllerUpload
+            .execute(request, false)
+            .then((resultControllerUploadList) => {
+                let fileName = "";
 
-                    for (const resultControllerUpload of resultControllerUploadList) {
-                        if (resultControllerUpload.name === "file" && resultControllerUpload.fileName) {
-                            fileName = resultControllerUpload.fileName;
+                for (const resultControllerUpload of resultControllerUploadList) {
+                    if (resultControllerUpload.name === "file" && resultControllerUpload.fileName) {
+                        fileName = resultControllerUpload.fileName;
 
-                            break;
-                        }
+                        break;
                     }
+                }
 
-                    response.status(200).send({ fileName: `${fileName}` });
-                })
-                .catch((error: Error) => {
-                    response.status(200).send({ Error: "Upload failed." });
-                });
-        })();
+                response.status(200).send({ fileName: `${fileName}` });
+            })
+            .catch((error: Error) => {
+                response.status(200).send({ Error: "Upload failed." });
+            });
     });
 };
 
