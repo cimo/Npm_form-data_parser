@@ -1,5 +1,5 @@
 // Source
-import * as model from "./Model";
+import * as model from "./Model.js";
 
 const createObject = (input: model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
     Object.defineProperty(input, label, {

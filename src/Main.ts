@@ -1,2 +1,2 @@
-export * as CfdpModel from "./Model";
-export * as Cfdp from "./Service";
+export * as CfdpModel from "./Model.js";
+export * as Cfdp from "./Service.js";
