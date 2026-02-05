@@ -98,10 +98,14 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
 
                     if (isFileExists && Fs.existsSync(input)) {
                         reject("File exists.");
+
+                        return;
                     } else {
                         // Write the file "formData.buffer"
 
                         resolve(formDataList);
+
+                        return;
                     }
 
                     break;
@@ -111,6 +115,8 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
 
         request.on("error", (error: Error) => {
             reject(error);
+
+            return;
         });
     });
 };
