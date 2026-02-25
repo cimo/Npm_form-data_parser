@@ -99,7 +99,7 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
                     const input = `/home/app/file/input/${formData.fileName}`;
 
                     if (isFileExists && Fs.existsSync(input)) {
-                        reject("File exists.");
+                        reject(new Error("File exists."));
 
                         return;
                     } else {
