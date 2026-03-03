@@ -116,7 +116,7 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
         });
 
         request.on("error", (error: Error) => {
-            reject(error);
+            reject(new Error(error.message));
 
             return;
         });
