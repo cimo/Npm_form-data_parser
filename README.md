@@ -81,7 +81,7 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
         });
 
         request.on("end", () => {
-            const contentType = request.headers["content-type"];
+            const contentType = request.headers["content-type"] as string;
 
             const buffer = Buffer.concat(chunkList);
             const formDataList = Cfdp.readInput(buffer, contentType);
