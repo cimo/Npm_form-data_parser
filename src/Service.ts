@@ -16,22 +16,24 @@ const processData = (header: model.Iheader): model.Iinput => {
     const contentDispositionSplit = header.contentDisposition.split(";");
 
     if (contentDispositionSplit) {
-        const name = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1].replace(/"/g, "").trim() : "";
+        const nameRaw = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1] : undefined;
+        const name = nameRaw ? nameRaw.replace(/"/g, "").trim() : "";
         const buffer = Buffer.from(header.byteList);
-        const fileName = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1].trim() : "";
+        const fileNameRaw = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1] : undefined;
+        const fileName = fileNameRaw ? fileNameRaw.trim() : "";
 
         createObject(resultObject, "name", name);
 
         createObject(resultObject, "buffer", buffer);
 
         if (fileName) {
-            const byteObject: Record<string, number> = JSON.parse(fileName);
-            createObject(resultObject, "fileName", byteObject);
+            const fileNameClean = fileName.replace(/"/g, "").trim();
+            createObject(resultObject, "fileName", fileNameClean);
 
             const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
             createObject(resultObject, "mimeType", mimeType);
 
-            const size = Buffer.byteLength(buffer);
+            const size = Buffer.byteLength(buffer).toString();
             createObject(resultObject, "size", size);
         }
     }
@@ -74,11 +76,13 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): mode
                 } else {
                     readState = model.EreadState.DATA;
 
-                    for (const b of headerInputList) {
-                        if (b.toLowerCase().startsWith("content-disposition:")) {
-                            headerContentDisposition = b;
-                        } else if (b.toLowerCase().startsWith("content-type:")) {
-                            headerContentType = b;
+                    for (let b = 0; b < headerInputList.length; b++) {
+                        const headerInput = headerInputList[b];
+
+                        if (headerInput.toLowerCase().startsWith("content-disposition:")) {
+                            headerContentDisposition = headerInput;
+                        } else if (headerInput.toLowerCase().startsWith("content-type:")) {
+                            headerContentType = headerInput;
                         }
                     }
 

@@ -43,11 +43,13 @@ import * as ControllerUpload from "../Controller/Upload";
 export const api = (app: Express.Express): void => {
     app.post("/upload", (request: Express.Request, response: Express.Response) => {
         ControllerUpload
-            .execute(request, false)
-            .then((resultControllerUploadList) => {
+            .execute(request, true, true, "/path/")
+            .then((result) => {
                 let fileName = "";
 
-                for (const resultControllerUpload of resultControllerUploadList) {
+                for (let a = 0; a < result.length; a++) {
+                    const resultControllerUpload = result[a];
+
                     if (resultControllerUpload.name === "file" && resultControllerUpload.fileName) {
                         fileName = resultControllerUpload.fileName;
 
@@ -72,7 +74,7 @@ export const api = (app: Express.Express): void => {
 
 import { Cfdp, CfdpModel } from "@cimo/form-data_parser/dist/src/Main";
 
-export const execute = (request: Express.Request, isFileExists: boolean): Promise<CfdpModel.Iinput[]> => {
+execute = (request: Request, isFileExists: boolean, isDecode: boolean, pathValue: string): Promise<CfdpModel.Iinput[]> => {
     return new Promise((resolve, reject) => {
         const chunkList: Buffer[] = [];
 
@@ -81,29 +83,58 @@ export const execute = (request: Express.Request, isFileExists: boolean): Promis
         });
 
         request.on("end", () => {
-            const contentType = request.headers["content-type"] as string;
+            const contentType = request.headers["content-type"];
 
             const buffer = Buffer.concat(chunkList);
             const formDataList = Cfdp.readInput(buffer, contentType);
 
-            for (const formData of formDataList) {
-                if (formData.name === "file" && formData.fileName && formData.buffer) {
-                    const input = `/home/app/file/input/${formData.fileName}`;
+            const resultCheckRequest = this.checkRequest(formDataList);
 
-                    if (isFileExists && Fs.existsSync(input)) {
-                        reject(new Error("File exists."));
+            if (resultCheckRequest === "") {
+                for (let a = 0; a < formDataList.length; a++) {
+                    const formData = formDataList[a];
 
-                        return;
-                    } else {
-                        // Write the file "formData.buffer"
+                    if (formData.name === "file" && formData.fileName && formData.buffer) {
+                        const fileName = isDecode ? decodeURIComponent(formData.fileName) : formData.fileName;
+                        const pathFile = `${pathValue}${formData.fileName}`;
 
-                        resolve(formDataList);
+                        Fs.mkdir(pathValue, { recursive: true }, (error) => {
+                            if (!error) {
+                                if (isFileExists) {
+                                    Fs.access(pathFile, Fs.constants.F_OK, (error) => {
+                                        if (!error) {
+                                            reject(new Error("File exists."));
 
-                        return;
+                                            return;
+                                        }
+                                    });
+                                }
+
+                                helperSrc.fileWriteStream(pathFile, formData.buffer, (resultFileWriteStream) => {
+                                    if (typeof resultFileWriteStream === "boolean" && resultFileWriteStream) {
+                                        resolve(formDataList);
+
+                                        return;
+                                    } else {
+                                        reject(new Error("File write failed."));
+
+                                        return;
+                                    }
+                                });
+                            } else {
+                                reject(new Error("Directory creation failed."));
+
+                                return;
+                            }
+                        });
+
+                        break;
                     }
-
-                    break;
                 }
+            } else {
+                reject(new Error(resultCheckRequest));
+
+                return;
             }
         });
 
