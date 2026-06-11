@@ -103,7 +103,7 @@ execute = (request: Request, isFileExists: boolean, isDecode: boolean, pathValue
                                 if (isFileExists) {
                                     Fs.access(pathFile, Fs.constants.F_OK, (error) => {
                                         if (!error) {
-                                            reject(new Error("File exists."));
+                                            resolve([]);
 
                                             return;
                                         }
