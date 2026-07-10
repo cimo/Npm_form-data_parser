@@ -1,7 +1,7 @@
 // Source
 import * as model from "./Model.js";
 
-const createObject = (input: model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
+const propertyDefine = (input: model.Iinput, label: string, value: Buffer | Record<string, number> | string | number): void => {
     Object.defineProperty(input, label, {
         value: value,
         writable: true,
@@ -22,19 +22,19 @@ const processData = (header: model.Iheader): model.Iinput => {
         const fileNameRaw = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1] : undefined;
         const fileName = fileNameRaw ? fileNameRaw.trim() : "";
 
-        createObject(resultObject, "name", name);
+        propertyDefine(resultObject, "name", name);
 
-        createObject(resultObject, "buffer", buffer);
+        propertyDefine(resultObject, "buffer", buffer);
 
         if (fileName) {
             const fileNameClean = fileName.replace(/"/g, "").trim();
-            createObject(resultObject, "fileName", fileNameClean);
+            propertyDefine(resultObject, "fileName", fileNameClean);
 
             const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
-            createObject(resultObject, "mimeType", mimeType);
+            propertyDefine(resultObject, "mimeType", mimeType);
 
             const size = Buffer.byteLength(buffer).toString();
-            createObject(resultObject, "size", size);
+            propertyDefine(resultObject, "size", size);
         }
     }
 
