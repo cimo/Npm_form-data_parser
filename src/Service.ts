@@ -10,32 +10,74 @@ const propertyDefine = (input: model.Iinput, label: string, value: Buffer | Reco
     });
 };
 
+const parameterRead = (value: string): Record<string, string> => {
+    const resultObject: Record<string, string> = {};
+
+    const partList: string[] = [];
+
+    let part = "";
+    let isQuote = false;
+
+    for (let a = 0; a < value.length; a++) {
+        const character = value[a];
+
+        if (character === '"') {
+            isQuote = !isQuote;
+
+            part += character;
+        } else if (character === ";" && !isQuote) {
+            partList.push(part);
+
+            part = "";
+        } else {
+            part += character;
+        }
+    }
+
+    partList.push(part);
+
+    for (let a = 0; a < partList.length; a++) {
+        const separatorIndex = partList[a].indexOf("=");
+
+        if (separatorIndex === -1) {
+            continue;
+        }
+
+        const label = partList[a].slice(0, separatorIndex).trim().toLowerCase();
+
+        let content = partList[a].slice(separatorIndex + 1).trim();
+
+        if (content.length > 1 && content.startsWith('"') && content.endsWith('"')) {
+            content = content.slice(1, -1);
+        }
+
+        resultObject[label] = content;
+    }
+
+    return resultObject;
+};
+
 const processData = (header: model.Iheader): model.Iinput => {
     const resultObject = {} as model.Iinput;
 
-    const contentDispositionSplit = header.contentDisposition.split(";");
+    const parameterObject = parameterRead(header.contentDisposition);
 
-    if (contentDispositionSplit) {
-        const nameRaw = contentDispositionSplit[1] ? contentDispositionSplit[1].split("=")[1] : undefined;
-        const name = nameRaw ? nameRaw.replace(/"/g, "").trim() : "";
-        const buffer = Buffer.from(header.byteList);
-        const fileNameRaw = contentDispositionSplit[2] ? contentDispositionSplit[2].split("=")[1] : undefined;
-        const fileName = fileNameRaw ? fileNameRaw.trim() : "";
+    const name = parameterObject["name"] ? parameterObject["name"] : "";
+    const buffer = Buffer.from(header.byteList);
+    const fileName = parameterObject["filename"] ? parameterObject["filename"] : "";
 
-        propertyDefine(resultObject, "name", name);
+    propertyDefine(resultObject, "name", name);
 
-        propertyDefine(resultObject, "buffer", buffer);
+    propertyDefine(resultObject, "buffer", buffer);
 
-        if (fileName) {
-            const fileNameClean = fileName.replace(/"/g, "").trim();
-            propertyDefine(resultObject, "fileName", fileNameClean);
+    if (fileName) {
+        propertyDefine(resultObject, "fileName", fileName);
 
-            const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
-            propertyDefine(resultObject, "mimeType", mimeType);
+        const mimeType = header.contentType.split(":")[1] ? header.contentType.split(":")[1].trim() : "";
+        propertyDefine(resultObject, "mimeType", mimeType);
 
-            const size = Buffer.byteLength(buffer).toString();
-            propertyDefine(resultObject, "size", size);
-        }
+        const size = Buffer.byteLength(buffer).toString();
+        propertyDefine(resultObject, "size", size);
     }
 
     return resultObject;
@@ -45,9 +87,14 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): mode
     const resultList: model.Iinput[] = [];
 
     if (contentType) {
-        const boundary = contentType.replace("multipart/form-data; boundary=", "");
+        const boundary = parameterRead(contentType)["boundary"];
+
+        if (!boundary) {
+            return resultList;
+        }
 
         let line = "";
+        let lineByteList: number[] = [];
         let readState = model.EreadState.INIT;
         let headerInputList: string[] = [];
         let headerContentDisposition = "";
@@ -62,6 +109,10 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): mode
 
             if (!characterNewLine) {
                 line += String.fromCharCode(byte);
+
+                if (readState !== model.EreadState.DATA) {
+                    lineByteList.push(byte);
+                }
             }
 
             if (characterReturn && readState === model.EreadState.INIT) {
@@ -70,9 +121,10 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): mode
                 }
 
                 line = "";
+                lineByteList = [];
             } else if (characterReturn && readState === model.EreadState.HEADER) {
                 if (line.length) {
-                    headerInputList.push(line);
+                    headerInputList.push(Buffer.from(lineByteList).toString("utf8"));
                 } else {
                     readState = model.EreadState.DATA;
 
@@ -90,6 +142,7 @@ export const readInput = (buffer: Buffer, contentType: string | undefined): mode
                 }
 
                 line = "";
+                lineByteList = [];
             } else if (readState === model.EreadState.DATA) {
                 if (line.length > boundary.length + 4) {
                     line = "";

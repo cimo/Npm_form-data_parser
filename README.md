@@ -9,8 +9,8 @@ Writed with native Typescript code and no dependencies are used.
 
 ## Publish
 1. npm run build
-2. npm login --auth-type=legacy
-3. npm publish --auth-type=legacy --access public
+2. npm login --auth-type=legacy --otp=xxx
+3. npm publish --auth-type=legacy --access public --otp=xxx
 
 ## Installation
 1. Link for npm package -> https://www.npmjs.com/package/@cimo/form-data_parser
