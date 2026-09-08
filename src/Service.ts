@@ -10,6 +10,48 @@ const propertyDefine = (input: model.Iinput, label: string, value: Buffer | Reco
     });
 };
 
+const decodeEscape = (value: string): string => {
+    return value.replace(/%22/gi, '"').replace(/%0D/gi, "\r").replace(/%0A/gi, "\n");
+};
+
+const decodePercent = (value: string): Buffer => {
+    const byteList: number[] = [];
+
+    for (let a = 0; a < value.length; a++) {
+        if (value[a] === "%" && a + 2 < value.length && /^[0-9a-f]{2}$/i.test(value.slice(a + 1, a + 3))) {
+            byteList.push(parseInt(value.slice(a + 1, a + 3), 16));
+
+            a += 2;
+
+            continue;
+        }
+
+        const bufferCharacter = Buffer.from(value[a], "utf8");
+
+        for (let b = 0; b < bufferCharacter.length; b++) {
+            byteList.push(bufferCharacter[b]);
+        }
+    }
+
+    return Buffer.from(byteList);
+};
+
+const decodeExtended = (value: string): string => {
+    const partList = value.split("'");
+
+    if (partList.length < 3) {
+        return "";
+    }
+
+    const charset = partList[0].trim().toLowerCase();
+
+    if (charset !== "utf-8" && charset !== "iso-8859-1") {
+        return "";
+    }
+
+    return decodePercent(partList.slice(2).join("'")).toString(charset === "utf-8" ? "utf8" : "latin1");
+};
+
 const parameterRead = (value: string): Record<string, string> => {
     const resultObject: Record<string, string> = {};
 
@@ -20,8 +62,9 @@ const parameterRead = (value: string): Record<string, string> => {
 
     for (let a = 0; a < value.length; a++) {
         const character = value[a];
+        const characterPrevious = a > 0 ? value[a - 1] : "";
 
-        if (character === '"') {
+        if (character === '"' && characterPrevious !== "\\") {
             isQuote = !isQuote;
 
             part += character;
@@ -48,7 +91,7 @@ const parameterRead = (value: string): Record<string, string> => {
         let content = partList[a].slice(separatorIndex + 1).trim();
 
         if (content.length > 1 && content.startsWith('"') && content.endsWith('"')) {
-            content = content.slice(1, -1);
+            content = content.slice(1, -1).replace(/\\"/g, '"');
         }
 
         resultObject[label] = content;
@@ -62,9 +105,10 @@ const processData = (header: model.Iheader): model.Iinput => {
 
     const parameterObject = parameterRead(header.contentDisposition);
 
-    const name = parameterObject["name"] ? parameterObject["name"] : "";
+    const name = parameterObject["name"] ? decodeEscape(parameterObject["name"]) : "";
     const buffer = Buffer.from(header.byteList);
-    const fileName = parameterObject["filename"] ? parameterObject["filename"] : "";
+    const fileNameExtended = parameterObject["filename*"] ? decodeExtended(parameterObject["filename*"]) : "";
+    const fileName = fileNameExtended ? fileNameExtended : parameterObject["filename"] ? decodeEscape(parameterObject["filename"]) : "";
 
     propertyDefine(resultObject, "name", name);
 
